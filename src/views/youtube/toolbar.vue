@@ -1,18 +1,20 @@
 <template>
   <div class="h-full overflow-hidden">
-    <div class="flex items-stretch justify-between border-b bg-black border-gray-600 select-none h-10 px-2 space-x-2">
+    <div
+      class="flex items-stretch justify-between border-b bg-black border-gray-600 select-none h-10 px-2 space-x-2"
+    >
       <div class="flex items-center flex-1 drag space-x-2 appear">
-        <div class="flex items-center space-x-1"
-             v-if="!isDarwin">
-          <div class="text-xs label -mt-px flex-none">YouTube Music for Desktop</div>
-          <div class="text-xs opacity-30 text-white"
-               v-if="appVersion !== undefined">v{{ appVersion }}</div>
+        <div class="flex items-center space-x-1" v-if="!isDarwin">
+          <div class="text-xs label -mt-px flex-none">YouTube Music</div>
         </div>
-        <div v-else
-             class="flex-none w-16"></div>
-        <div class="text-xs bg-primary h-7 rounded items-center px-3 bg-opacity-50 appear flex truncate"
-             v-if="title">
-          <span class="truncate overflow-ellipsis">{{ title }}</span>
+        <div v-else class="flex-none w-16"></div>
+        <div
+          class="text-xs bg-secondary h-7 rounded items-center px-3 bg-opacity-50 appear flex truncate"
+          v-if="track"
+        >
+          <span class="truncate overflow-ellipsis"
+            >{{ track?.video?.title }} • {{ track?.video?.author }}</span
+          >
         </div>
       </div>
       <div class="flex items-center space-x-2">
@@ -21,10 +23,18 @@
           <div class="w-px h-6 bg-gray-600"></div>
         </template>
         <template v-if="updateInfo">
-          <button class="text-xs h-7 rounded items-center px-3 transition duration-100 ease-out appear flex truncate cursor-pointer"
-                  :class="{ 'bg-green-500 text-white': updateInfo && !updateInfoProgress && !updateDownloaded, 'text-green-500': updateDownloaded }"
-                  @click="() => runUpdate()">
-            <template v-if="updateInfoProgress?.percent">Downloading Update v{{ updateInfo.version }}... {{ updateInfoProgress.percent.toFixed(0).padStart(5) }}%</template>
+          <button
+            class="text-xs h-7 rounded items-center px-3 transition duration-100 ease-out appear flex truncate cursor-pointer"
+            :class="{
+              'bg-green-500 text-white': updateInfo && !updateInfoProgress && !updateDownloaded,
+              'text-green-500': updateDownloaded,
+            }"
+            @click="() => runUpdate()"
+          >
+            <template v-if="updateInfoProgress?.percent"
+              >Downloading Update v{{ updateInfo.version }}...
+              {{ updateInfoProgress.percent.toFixed(0).padStart(5) }}%</template
+            >
             <template v-else>
               <span class="truncate overflow-ellipsis">New Update v{{ updateInfo.version }}</span>
             </template>
@@ -34,16 +44,13 @@
         <template v-if="!isDarwin">
           <div class="w-px h-6 bg-gray-600"></div>
           <div class="flex items-center space-x-1">
-            <div @click="onMin"
-                 class="control-button">
+            <div @click="onMin" class="control-button">
               <MinIcon />
             </div>
-            <div @click="onMax"
-                 class="control-button">
+            <div @click="onMax" class="control-button">
               <MaxIcon />
             </div>
-            <div @click="onClose"
-                 class="control-button control-button-danger">
+            <div @click="onClose" class="control-button control-button-danger">
               <CloseIcon />
             </div>
           </div>
@@ -70,7 +77,7 @@ export default defineComponent({
     ToolbarOptions,
   },
   setup() {
-    const [title] = refIpc("TRACK_TITLE_CHANGE", {
+    const [track] = refIpc("TRACK_CHANGE", {
       ignoreUndefined: true,
       defaultValue: null,
     });
@@ -89,7 +96,7 @@ export default defineComponent({
     });
     const isInstalling = ref(false);
     return {
-      title,
+      track,
       appVersion,
       updateInfo,
       updateInfoProgress,
@@ -123,7 +130,7 @@ export default defineComponent({
       window.api.minimize();
     },
   },
-  created() { },
+  created() {},
 });
 </script>
 

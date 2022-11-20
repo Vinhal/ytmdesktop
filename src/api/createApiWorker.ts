@@ -23,6 +23,7 @@ export const createApiWorker = async (
     height: 0,
     width: 0,
     maximizable: false,
+    icon: path.join(__static, 'icon.png'),
     paintWhenInitiallyHidden: false,
     webPreferences: {
       nodeIntegration: true,

@@ -6,17 +6,13 @@
     }"
   >
     <div class="relative">
-      <control-bar title="Mini Player" class="bg-transparent border-b-0 z-20 pl-4 relative">
+      <control-bar
+        hide-max-button
+        title="Youtube Music"
+        class="bg-transparent border-b-0 z-20 pl-4 pt-1 relative"
+      >
         <template #icon>
           <MiniPlayerIcon class="antialiased" />
-        </template>
-        <template #divider>
-          <span
-            class="border border-zinc-600 rounded h-6 leading-5 px-2.5 text-xs uppercase font-semibold"
-            :style="{ ...(accentColor ? { borderColor: `${accentColor}80` } : {}) }"
-          >
-            Beta
-          </span>
         </template>
       </control-bar>
       <div
@@ -98,13 +94,18 @@
               />
             </div>
           </div>
+
           <div class="flex flex-col flex-1 h-full truncate">
-            <div class="min-w-0 flex-auto space-y-1 font-semibold truncate" v-if="track?.video">
+            <div
+              class="min-w-0 flex-auto space-y-1 font-semibold truncate flex items-center justify-center"
+              :style="{ 'flex-direction': 'column' }"
+              v-if="track?.video"
+            >
               <h2 class="text-zinc-50 text-lg truncate">
                 {{ track.video.title }}
               </h2>
               <p class="text-zinc-400 text-sm md:text-base lg:text-lg leading-6 truncate">
-                by {{ track.video.author }}
+                {{ track.video.author }}
               </p>
               <div
                 class="text-zinc-400 text-sm space-x-1 flex items-center whitespace-pre"
@@ -115,7 +116,9 @@
                 <p class="track-status-time tabular-nums">{{ time[1] }}</p>
               </div>
             </div>
-            <div class="flex items-center space-x-2 mt-auto flex-shrink-0">
+            <div
+              class="flex items-center space-x-2 mt-auto flex-shrink-0 items-center justify-center"
+            >
               <button
                 type="button"
                 class="player-btn"
@@ -268,7 +271,8 @@ export default defineComponent({
   },
   computed: {
     thumbnail() {
-      return this.track?.video.thumbnail.thumbnails[0]?.url;
+      const thumbnails = this.track?.video.thumbnail.thumbnails || [];
+      return thumbnails[thumbnails.length - 1]?.url;
     },
     playing() {
       return !!this.playState?.playing;
@@ -308,7 +312,7 @@ export default defineComponent({
     const showWinBorder = ref(false);
     const trackBusy = ref(false);
     onMounted(() => {
-      document.title = `YouTube Music - Mini Player`;
+      document.title = `YouTube Music - Player`;
       Promise.all([
         window.ipcRenderer.invoke("api/track"),
         window.ipcRenderer.invoke("api/track/state"),

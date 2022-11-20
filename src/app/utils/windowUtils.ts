@@ -17,11 +17,11 @@ const log = logger.child({ label: "main" });
 export function parseScriptPath(p: string) {
   return path.resolve(__dirname, p);
 }
-export const appIconPath = path.resolve(__static, "favicon.ico");
+export const appIconPath = path.resolve(__static, "icon.png");
 export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
   // eslint-disable-next-line prefer-const
-  let { parent, path, minHeight, minWidth, maxHeight, maxWidth, height, width, top } = appOptions ?? {};
-  if (!path) path = "/";
+  let { parent, path: basePath, minHeight, minWidth, maxHeight, maxWidth, height, width, top } = appOptions ?? {};
+  if (!basePath) basePath = "/";
   // Create the browser window.
   const win = new BrowserWindow({
     width: width ?? 800,
@@ -33,7 +33,7 @@ export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
     minimizable: false,
     backgroundColor: "#000000",
     fullscreenable: !maxWidth && !maxWidth,
-    icon: appIconPath,
+    icon: path.join(__static, 'icon.png'),
     frame: false,
     parent,
     modal: parent && top === true,
@@ -52,12 +52,12 @@ export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
     await win.loadURL(
       process.env.WEBPACK_DEV_SERVER_URL.replace(/\/$/, "") +
         "/#" +
-        path.replace(/^\//, "")
+        basePath.replace(/^\//, "")
     );
     if (isDevelopment) win.webContents.openDevTools();
   } else {
     // Load the index.html when not in development
-    await win.loadURL("app://./index.html#/" + path.replace(/^\//, ""));
+    await win.loadURL("app://./index.html#/" + basePath.replace(/^\//, ""));
   }
   win.webContents.on("new-window", function (e, url) {
     if (url.startsWith("http")) {

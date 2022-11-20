@@ -63,7 +63,7 @@ export default async function () {
       minWidth: 800,
       minHeight: 480,
       autoHideMenuBar: true,
-      icon: path.resolve(__static, "favicon.ico"),
+      icon: path.join(__static, 'icon.png'),
       backgroundColor: "#000000",
       center: true,
       closable: true,

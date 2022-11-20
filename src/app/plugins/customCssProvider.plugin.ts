@@ -23,7 +23,7 @@ export default class EventProvider extends BaseProvider implements AfterInit {
   private getScssPath() {
     return (
       this.settingsInstance.get("customcss.scssFile") ??
-      path.resolve(this.app.getPath("documents"), "ytmdesktop", "custom.scss")
+      path.resolve(this.app.getPath("home"), ".ytmdesktop", "custom.scss")
     );
   }
   @IpcOn("settings.customCssWatch")

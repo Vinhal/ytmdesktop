@@ -1,3 +1,4 @@
+
 import translations from "@/translations";
 import logger from "@/utils/Logger";
 import {
@@ -72,7 +73,7 @@ export default async function () {
       minWidth: 800,
       minHeight: 480,
       autoHideMenuBar: true,
-      icon: appIconPath,
+      icon: path.join(__static, 'icon.png'),
       backgroundColor: "#000000",
       center: true,
       closable: true,
