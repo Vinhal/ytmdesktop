@@ -122,15 +122,13 @@
               <button
                 type="button"
                 class="player-btn"
-                :class="{ active: !!playState?.disliked }"
                 @click="dislikeToggle"
                 :disabled="trackBusy"
                 v-if="playState?.disliked !== undefined"
                 aria-label="Dislike"
+                title="Dislike"
                 :style="{
-                  ...(accentColor && !!playState?.disliked
-                    ? { color: accentColor, stroke: '#fff' }
-                    : {}),
+                  color: !!playState?.disliked ? '#fff' : '#777',
                 }"
               >
                 <LikeIcon class="rotate-180" />
@@ -138,18 +136,72 @@
               <button
                 type="button"
                 class="player-btn"
-                :class="{ active: !!playState?.liked }"
                 @click="likeToggle"
                 :disabled="trackBusy"
                 :style="{
-                  ...(accentColor && !!playState?.liked
-                    ? { color: accentColor, stroke: '#fff' }
-                    : {}),
+                  color: !!playState?.liked ? '#fff' : '#777',
                 }"
                 v-if="playState?.liked !== undefined"
                 aria-label="Like"
+                title="Like"
               >
                 <LikeIcon />
+              </button>
+
+              <slot name="divider">
+                <div class="w-px h-6 bg-gray-400"></div>
+              </slot>
+
+              <button
+                type="button"
+                class="player-btn"
+                @click="muteToggle"
+                :disabled="trackBusy"
+                :style="{
+                  stroke: !!playState?.muted ? '#fff' : '#777',
+                }"
+                v-if="playState?.repeat !== undefined"
+                aria-label="Mute"
+                title="Mute"
+              >
+                <template v-if="playState?.muted">
+                  <MutedIcon />
+                </template>
+                <template v-if="!playState?.muted">
+                  <VolumeIcon />
+                </template>
+              </button>
+
+              <button
+                type="button"
+                class="player-btn"
+                @click="repeatToggle"
+                :disabled="trackBusy"
+                :style="{
+                  stroke: ['all', 'one'].includes(playState?.repeat) ? '#fff' : '#777',
+                }"
+                v-if="playState?.repeat !== undefined"
+                aria-label="Repeat"
+                :title="'Repeat ' + playState?.repeat"
+              >
+                <template v-if="playState?.repeat == 'all' || playState?.repeat == 'off'">
+                  <RepeatIcon />
+                </template>
+                <template v-if="playState?.repeat == 'one'">
+                  <RepeatOneIcon />
+                </template>
+              </button>
+
+              <button
+                type="button"
+                class="player-btn"
+                @click="shuffleClick"
+                :disabled="trackBusy"
+                :style="{ stroke: '#777' }"
+                aria-label="Shuffle"
+                title="Shuffle"
+              >
+                <ShuffleIcon />
               </button>
             </div>
           </div>
@@ -157,15 +209,19 @@
       </div>
       <div class="flex flex-col relative z-10">
         <div class="group pt-4 -mt-4" v-if="time">
-          <div
-            class="h-1 group-hover:h-2 bg-white transition-all ease-in-out duration-150"
-            :style="{
-              width: `${time[2]}%`,
-              maxWidth: '100%',
-              ...(accentColor ? { backgroundColor: accentColor } : {}),
-            }"
-            ref="progressHandle"
-          ></div>
+          <div class="bg-gray-500 cursor-pointer" @click="setCurrentTime">
+            <div
+              id="progress-bar"
+              class="progress-bar h-1 group-hover:h-2 bg-white transition-all ease-in-out duration-150"
+              :style="{
+                width: `${time[2]}%`,
+                maxWidth: '100%',
+                '-webkit-appearance': 'none',
+                ...(accentColor ? { backgroundColor: accentColor } : {}),
+              }"
+              ref="progressHandle"
+            ></div>
+          </div>
         </div>
         <div class="bg-zinc-50/5 mt-auto text-zinc-200 flex items-center h-16">
           <div class="flex-auto flex items-center justify-evenly">
@@ -175,6 +231,7 @@
               :disabled="trackBusy"
               @click="prev"
               aria-label="Previous"
+              title="Previous song"
             >
               <PrevIcon />
             </button>
@@ -184,6 +241,7 @@
               :disabled="trackBusy"
               @click="() => backward()"
               aria-label="Rewind 10 seconds"
+              title="Rewind 10 seconds"
             >
               <BackwardIcon />
             </button>
@@ -195,8 +253,10 @@
               ...(accentColor ? { borderColor: accentColor } : {}),
             }"
             aria-label="Pause"
+            :title="!playing ? 'Play' : 'Pause'"
             :disabled="trackBusy"
             @click="() => (!playing ? play() : pause())"
+            id="play-pause-button"
           >
             <div class="fill-icon fill-zinc-700">
               <template v-if="playing">
@@ -214,6 +274,7 @@
               :disabled="trackBusy"
               @click="() => forward()"
               aria-label="Skip 10 seconds"
+              title="Skip 10 seconds"
             >
               <ForwardIcon />
             </button>
@@ -223,6 +284,7 @@
               @click="next"
               :disabled="trackBusy"
               aria-label="Next"
+              title="Next song"
             >
               <NextIcon />
             </button>
@@ -243,11 +305,17 @@ import NextIcon from "@/assets/icons/next.svg";
 import PrevIcon from "@/assets/icons/prev.svg";
 import ForwardIcon from "@/assets/icons/forward10.svg";
 import LikeIcon from "@/assets/icons/like.svg";
+import ShuffleIcon from "@/assets/icons/shuffle.svg";
+import RepeatIcon from "@/assets/icons/repeat.svg";
+import RepeatOneIcon from "@/assets/icons/repeat-one.svg";
+import VolumeIcon from "@/assets/icons/volume.svg";
+import MutedIcon from "@/assets/icons/muted.svg";
 import BackwardIcon from "@/assets/icons/backward10.svg";
 import { TrackData } from "@/app/utils/trackData";
 import { refIpc } from "@/utils/Ipc";
 import { defineComponent, onMounted, ref, watch, watchEffect } from "vue";
 import { intervalToDuration } from "date-fns";
+
 const zeroPad = (num) => String(num).padStart(2, "0");
 const createInterval = (dts: number[]): [string, number] => [
   dts
@@ -268,6 +336,11 @@ export default defineComponent({
     LikeIcon,
     BackwardIcon,
     Loading,
+    RepeatIcon,
+    RepeatOneIcon,
+    VolumeIcon,
+    MutedIcon,
+    ShuffleIcon,
   },
   computed: {
     thumbnail() {
@@ -308,6 +381,8 @@ export default defineComponent({
       duration: number;
       liked: boolean;
       disliked: boolean;
+      muted: boolean;
+      repeat: "off" | "one" | "all";
     }>("TRACK_PLAYSTATE");
     const showWinBorder = ref(false);
     const trackBusy = ref(false);
@@ -323,6 +398,14 @@ export default defineComponent({
         showWinBorder.value = window.process.platform === "win32" ? !isWin11 : false;
       });
     });
+
+    playState.value = {
+      ...playState.value,
+      playing: false,
+    };
+
+    console.log({ playState: playState.value });
+
     const progressHandle = ref<HTMLElement>(null);
     return {
       track,
@@ -388,6 +471,15 @@ export default defineComponent({
         return window.ipcRenderer.invoke("api/track/like", !playState.value.liked).finally(() => {
           trackBusy.value = false;
         });
+      },
+      muteToggle() {
+        return window.ipcRenderer.invoke("api/track/mute");
+      },
+      repeatToggle() {
+        return window.ipcRenderer.invoke("api/track/repeat");
+      },
+      shuffleClick() {
+        return window.ipcRenderer.invoke("api/track/shuffle");
       },
       handleAccent(ev: Parameters<HTMLImageElement["onload"]>[0]) {
         const src = (ev.target as HTMLImageElement).src;

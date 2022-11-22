@@ -21,41 +21,53 @@ Beautiful Youtube Music desktop app that includes several customizations for use
 ## Features
 
 ### Mini Player (Beta)
+
 ![image](https://user-images.githubusercontent.com/17952364/183205288-abf687ed-7564-4158-859b-c7dad035db8d.png)
 
 ### Discord Rich Presence
 
 ![image](https://user-images.githubusercontent.com/17952364/149850075-8130daf0-3d76-4fdb-902b-b1756a6c4712.png)
+
 ### Custom CSS
 
 ![image](https://user-images.githubusercontent.com/17952364/149849609-fe5d3819-7303-4467-9f8e-56fa1e306c87.png)
 
 ### OBS Implementation
+
 [OBS Browser Source Files](https://github.com/Venipa/ytmdesktop2/releases/download/v0.9.0/Zyphen.s.Now.Playing.zip)
 /
 [OBS Plugin Thread](https://obsproject.com/forum/threads/zyphens-now-playing-overlay.125383/post-557409),
 don't forget to enable the api inside the ytmdesktop2 app
 
----------------
+---
 
 ... features to be added ...
 &nbsp;&nbsp;
 
----------------
+---
+
 &nbsp;&nbsp;
+
 ## Project setup
+
 ```
 yarn
 ```
 
 ### Compiles and hot-reloads for development
+
 ```
 yarn dev
 ```
 
 ### Compiles and minifies for production
+
 ```
 yarn build
 ```
+
 ### Customize configuration
+
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+// Darktheme color: #7f7f7f - Bullet With Butterfly Wings - Smashing Pumpkins

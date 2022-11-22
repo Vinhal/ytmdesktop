@@ -17,9 +17,9 @@
       <p class="text-xs">{{ title }}</p>
     </div>
     <div class="flex items-center space-x-2">
-      <slot name="divider">
-        <div class="w-px h-6 bg-gray-600"></div>
-      </slot>
+      <div class="control-button control-button-danger">
+        <slot name="action"> </slot>
+      </div>
       <div class="flex items-center space-x-1">
         <template v-if="!isMac">
           <div @click="onMin" class="control-button">

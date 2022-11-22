@@ -8,6 +8,8 @@ import DiscordProvider from "./discordProvider.plugin";
 import IPC_EVENT_NAMES from "../utils/eventNames";
 import { clone } from "lodash-es";
 import ApiProvider from "./apiProvider.plugin";
+
+type RepeatState = 'off' | 'one' | 'all'
 type TrackState = {
   id: string;
   playing: boolean;
@@ -16,6 +18,8 @@ type TrackState = {
   duration: number;
   liked: boolean;
   disliked: boolean;
+  muted: boolean;
+  repeat: RepeatState;
 };
 const tracks: {
   [id: string]: TrackData;
@@ -94,6 +98,64 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
         .catch(() => [false, false])
     );
   }
+
+  /**
+   * 
+   * @param lazy 500ms timeout before throwing
+   * @returns [like, dislike] tuple
+   */
+   async currentMutedState(lazy?: boolean): Promise<boolean> {
+    return (
+      lazy ? new Promise<void>((resolve) => setTimeout(() => resolve(), 500)) : Promise.resolve()
+    ).then(() =>
+      this.views.youtubeView.webContents
+        .executeJavaScript(
+          `document.querySelector("#right-controls div.right-controls-buttons tp-yt-paper-icon-button.volume").ariaPressed`
+        )
+        .then((pressed: string) => pressed == "true")
+        .catch(() => false)
+    );
+  }
+
+  /**
+   * 
+   * @param lazy 500ms timeout before throwing
+   * @returns [like, dislike] tuple
+   */
+   async currentRepeatState(lazy?: boolean): Promise<RepeatState> {
+    const repeatParser: Record<string, RepeatState> = {
+      'Repeat all': 'all',
+      'Repeat one': 'one',
+      'Repeat off': 'off'
+    }
+
+    return (
+      lazy ? new Promise<void>((resolve) => setTimeout(() => resolve(), 500)) : Promise.resolve()
+    ).then(() =>
+      this.views.youtubeView.webContents
+        .executeJavaScript(
+          `document.querySelector("#right-controls div.right-controls-buttons tp-yt-paper-icon-button.repeat").ariaLabel`
+        )
+        .then((label: string) => repeatParser[label])
+        .catch(() => 'off')
+    );
+  }
+
+  async getTrackState(): Promise<TrackState> {
+    const isMuted = await this.currentMutedState();
+    const repeatState = await this.currentRepeatState();
+
+    const trackState: TrackState = {
+      ...this._trackState,
+      muted: isMuted,
+      repeat: repeatState,
+    };
+
+    this.setTrackState(trackState)
+
+    return trackState
+  }
+
   getTrackDuration() {
     const td = this.trackData;
     if (!this.trackData) return null;
@@ -112,6 +174,8 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     if (this.trackData) {
       const td = this.trackData;
       const [isLiked, isDLiked] = await this.currentSongLikeState();
+      const isMuted = await this.currentMutedState();
+      const repeatState = await this.currentRepeatState();
       this.pushTrackToViews(td);
       this.setTrackState({
         id: trackId,
@@ -121,6 +185,8 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
         disliked: isDLiked,
         progress: 0,
         uiProgress: 0,
+        muted: isMuted,
+        repeat: repeatState,
       });
     }
   }
@@ -160,6 +226,8 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     if (isUIViewRequired) await discordProvider.updatePlayState(isPlaying, currentUIProgress);
     else await discordProvider.updatePlayState(isPlaying, progressSeconds);
     const [isLiked, isDLiked] = await this.currentSongLikeState();
+    const isMuted = await this.currentMutedState();
+    const repeatState = await this.currentRepeatState();
     if (this._trackState) {
       this.setTrackState((state) => {
         state.playing = isPlaying;
@@ -178,6 +246,8 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
         disliked: isDLiked,
         duration: uiTimeInfo[1],
         id: this._activeTrackId,
+        muted: isMuted,
+        repeat: repeatState,
       });
     }
   }

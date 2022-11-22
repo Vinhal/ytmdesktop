@@ -14,16 +14,6 @@
     >
       <DevIcon></DevIcon>
     </button>
-    <button
-      @click="() => action('app.miniPlayer')"
-      class="control-button relative w-4 h-4"
-      :disabled="!playState"
-      :class="
-        miniPlayer ? { 'opacity-100': miniPlayer?.active, 'opacity-70': !miniPlayer?.active } : {}
-      "
-    >
-      <MiniPlayerIcon />
-    </button>
     <button @click="onSettings" class="control-button">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
         <path
@@ -32,6 +22,14 @@
           clip-rule="evenodd"
         />
       </svg>
+    </button>
+    <button
+      @click="() => action('app.miniPlayer')"
+      class="control-button relative w-4 h-4"
+      :disabled="!playState"
+      :class="miniPlayer ? { 'opacity-100': playState, 'opacity-70': !miniPlayer?.active } : {}"
+    >
+      <MiniPlayerIcon />
     </button>
   </div>
 </template>

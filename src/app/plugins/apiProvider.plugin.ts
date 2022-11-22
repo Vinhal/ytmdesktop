@@ -115,7 +115,7 @@ export default class ApiProvider
   }
   @IpcHandle(API_ROUTES.TRACK_CURRENT_STATE)
   async getTrackState() {
-    return (this.getProvider("track") as TrackProvider)?.trackState;
+    return (this.getProvider("track") as TrackProvider)?.getTrackState();
   }
   @IpcHandle(API_ROUTES.TRACK_CONTROL_NEXT)
   async nextTrack() {
@@ -171,5 +171,43 @@ export default class ApiProvider
     if (this.trackProvider.playState === "playing") return this.pauseTrack();
     else if (this.trackProvider.playState === "paused") return this.playTrack();
     return Promise.resolve(null);
+  }
+
+
+  @IpcHandle(API_ROUTES.TRACK_CONTROL_MUTE)
+  async muteTrack() {
+    await this.views.youtubeView.webContents.executeJavaScript(
+      `(el => el && el.click())(document.querySelector(".ytmusic-player-bar.volume"))`
+    )
+    .then(() => this.trackProvider.currentMutedState())
+    .then((muted) => {
+      this.trackProvider.setTrackState((state) => {
+        state.muted = muted;
+      });
+      return muted;
+    })
+    .catch(() => false);
+  }
+
+  @IpcHandle(API_ROUTES.TRACK_CONTROL_REPEAT)
+  async repeatTrack() {
+    await this.views.youtubeView.webContents.executeJavaScript(
+      `(el => el && el.click())(document.querySelector(".ytmusic-player-bar.repeat"))`
+    )
+    .then(() => this.trackProvider.currentRepeatState())
+    .then((repeateState) => {
+      this.trackProvider.setTrackState((state) => {
+        state.repeat = repeateState;
+      });
+      return repeateState;
+    })
+    .catch(() => 'off');
+  }
+
+  @IpcHandle(API_ROUTES.TRACK_CONTROL_SHUFFLE)
+  async shuffleTrack() {
+    await this.views.youtubeView.webContents.executeJavaScript(
+      `(el => el && el.click())(document.querySelector(".ytmusic-player-bar.shuffle"))`
+    );
   }
 }
