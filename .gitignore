@@ -1,27 +1,23 @@
+# distribution Folders
+dist/
+
+# Library & Library Manger files
+node_modules/
+
+.yarn/
+yarn-error.log
+package-lock.json
+
+# IDE folders
+.idea/
+.vs/
+.vscode/
+
+# Other Files
+.cache/
+
 .DS_Store
-node_modules
-/dist
-
-
-# local env files
-.env.local
-.env.*.local
-
-# Log files
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-#Electron-builder output
-/dist_electron
-/.VSCodeCounter
+/youtube-music-desktop-app-*.tgz
+app-update.yml
+dev-app-update.yml
+commit_hash.js
