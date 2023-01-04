@@ -8,6 +8,7 @@ import DiscordProvider from "./discordProvider.plugin";
 import IPC_EVENT_NAMES from "../utils/eventNames";
 import { clone } from "lodash-es";
 import ApiProvider from "./apiProvider.plugin";
+import MediaControlProvider from "./mediaControlProvider.plugin";
 
 type RepeatState = 'off' | 'one' | 'all'
 type TrackState = {
@@ -194,8 +195,12 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     this.views.toolbarView.webContents.send("track:title", track?.video?.title);
     this.views.youtubeView.webContents.send("track.change", track.video.videoId);
     this.windowContext.sendToAllViews(IPC_EVENT_NAMES.TRACK_CHANGE, track);
+    
     const api = this.getProvider("api") as ApiProvider;
-    api.sendMessage("track:change", { ...track });
+    api.sendMessage(IPC_EVENT_NAMES.TRACK_CHANGE, { ...track });
+
+    const mediaController = this.getProvider<MediaControlProvider>("mediaController");
+    mediaController.handleTrackMediaOSControlChange(track)
   }
   @IpcOn(IPC_EVENT_NAMES.TRACK_PLAYSTATE, {
     debounce: 100
@@ -206,16 +211,16 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     progressSeconds: number = 0,
     uiTimeInfo: [number, number] = null
   ) {
-    this.logger.debug(
-      [
-        "play state change",
-        isPlaying ? "playing" : "paused",
-        ", progress: ",
-        progressSeconds,
-        ", ui progress: ",
-        ...(uiTimeInfo?.length > 0 ? uiTimeInfo : ["-"]),
-      ].join(" ")
-    );
+    // this.logger.debug(
+    //   [
+    //     "play state change",
+    //     isPlaying ? "playing" : "paused",
+    //     ", progress: ",
+    //     progressSeconds,
+    //     ", ui progress: ",
+    //     ...(uiTimeInfo?.length > 0 ? uiTimeInfo : ["-"]),
+    //   ].join(" ")
+    // );
     this._playState = isPlaying ? "playing" : "paused";
     const discordProvider = this.getProvider("discord") as DiscordProvider;
     if (isPlaying && !discordProvider.isConnected && discordProvider.enabled)

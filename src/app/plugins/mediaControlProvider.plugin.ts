@@ -1,5 +1,5 @@
-import { App } from "electron";
-import { BaseProvider, AfterInit, BeforeStart } from "@/app/utils/baseProvider";
+import { App, globalShortcut } from "electron";
+import { BaseProvider, AfterInit, BeforeStart, OnDestroy } from "@/app/utils/baseProvider";
 import { IpcContext, IpcOn } from "@/app/utils/onIpcEvent";
 import TrackProvider from "./trackProvider.plugin";
 import { MediaServiceProvider } from "xosms";
@@ -10,28 +10,37 @@ import IPC_EVENT_NAMES from "../utils/eventNames";
 
 @IpcContext
 export default class MediaControlProvider extends BaseProvider
-  implements AfterInit, BeforeStart {
+  implements AfterInit, BeforeStart, OnDestroy {
   private _mediaProvider: MediaServiceProvider;
   private xosmsLog = this.logger.child("xosms");
+  
   constructor(private app: App) {
     super("mediaController");
   }
+  
+  private mediaProviderEnabled() {
+    return this._mediaProvider && this._mediaProvider.isEnabled;
+  }
+
   async BeforeStart(app?: App) {
     app.commandLine.appendSwitch("disable-features", "MediaSessionService");
     app.commandLine.appendSwitch("in-progress-gpu"); // gpu paint not working on some devices, todo: workaround/await fix
     app.commandLine.appendSwitch("no-sandbox"); // avoid freeze, todo: workaround/await fix
   }
+
   async AfterInit() {
     this._mediaProvider = ((msp) => {
       msp.isEnabled = true;
       return msp;
     })(new MediaServiceProvider(this.app.name, this.app.name));
+
     if (this._mediaProvider) {
       this._mediaProvider.buttonPressed = (keyName, ...args) => {
         this.xosmsLog.debug(["button press", keyName, ...args]);
         const trackProvider = this.getProvider<ApiProvider>("api");
-        if (keyName === "pause") trackProvider.pauseTrack();
+        if (keyName === "playpause") trackProvider.toggleTrackPlayback();
         else if (keyName === "play") trackProvider.playTrack();
+        else if (keyName === "pause") trackProvider.pauseTrack();
         else if (keyName === "next") trackProvider.nextTrack();
         else if (keyName === "previous") trackProvider.prevTrack();
       };
@@ -47,11 +56,18 @@ export default class MediaControlProvider extends BaseProvider
       );
   }
 
-  @IpcOn(IPC_EVENT_NAMES.TRACK_PLAYSTATE)
+  async OnDestroy() {
+    globalShortcut
+  }
+
+  // @IpcOn(IPC_EVENT_NAMES.TRACK_PLAYSTATE)
   private __handleTrackMediaOSControl(_ev, isPlaying: boolean) {
     if (!this.mediaProviderEnabled()) return;
 
+    console.log('NAVIGATOR')
+
     const { trackData } = this.getProvider<TrackProvider>("track");
+    // this.handleTrackMediaOSControlChange(trackData)
     if (!trackData) {
       this._mediaProvider.playbackStatus = XOSMS.PlaybackStatus.Stopped;
       this._mediaProvider.playButtonEnabled = true;
@@ -73,15 +89,28 @@ export default class MediaControlProvider extends BaseProvider
       );
     }
   }
-  private mediaProviderEnabled() {
-    return this._mediaProvider && this._mediaProvider.isEnabled;
-  }
-  @IpcOn("track:change")
-  private __handleTrackMediaOSControlChange(trackData: TrackData) {
+
+  public handleTrackMediaOSControlChange(trackData: TrackData) {
     if (!this.mediaProviderEnabled() || !trackData) return;
     const albumThumbnail = trackData.video.thumbnail.thumbnails
       .sort((a, b) => b.width - a.width)
       .find((x) => x.url)?.url;
+
+    this.views.youtubeView.webContents.executeJavaScript(`
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Unforgettable',
+        artist: 'Nat King Cole',
+        album: 'The Ultimate Collection (Remastered)',
+        artwork: [
+          { src: '${albumThumbnail}',   sizes: '512x512',   type: 'image/png' },
+        ]
+      })
+    `)
+
+    console.log('CHHHHHHHHHHHHHHANNGEDCHHHHHHHHHHHHHHANNGEDCHHHHHHHHHHHHHHANNGEDCHHHHHHHHHHHHHHANNGEDCHHHHHHHHHHHHHHANNGED', {
+      albumThumbnail,
+      title: trackData.video.title
+    })
     try {
       this._mediaProvider.mediaType =
       {

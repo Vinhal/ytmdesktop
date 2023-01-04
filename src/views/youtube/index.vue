@@ -5,18 +5,7 @@
 </template>
 
 <script>
-import { onMounted } from "vue";
-import MouseTrap from "mousetrap";
-
-export default defineComponent({
-  setup() {
-    onMounted(() => {
-      MouseTrap.bind("space", function () {
-        window.ipcRenderer.invoke("api/track/toggle-play-state");
-      });
-    });
-  },
-});
+export default {};
 </script>
 
 <style></style>

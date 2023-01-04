@@ -196,11 +196,5 @@ export default class DiscordProvider extends BaseProvider implements AfterInit {
       this._isConnected
     );
   }
-  @IpcOn("track:change", {
-    debounce: 100,
-  })
-  private async __onTrackInfo(track: TrackData) {
-    if (!this.client || !track?.video) return;
-    this.setActivity(discordEmbedFromTrack(track));
-  }
+ 
 }
