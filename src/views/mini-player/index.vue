@@ -9,7 +9,7 @@
       <control-bar
         hide-max-button
         title="Youtube Music"
-        class="bg-transparent border-b-0 z-20 pl-4 pt-1 relative"
+        class="bg-transparent border-b-0 z-20 pl-4 pt-4 relative"
       >
         <template #icon>
           <MiniPlayerIcon class="antialiased" />

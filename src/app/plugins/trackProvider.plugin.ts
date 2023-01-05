@@ -9,6 +9,8 @@ import IPC_EVENT_NAMES from '../utils/eventNames';
 import ApiProvider from './apiProvider.plugin';
 import DiscordProvider from './discordProvider.plugin';
 
+type RepeatState = 'all' | 'one' | 'off'
+
 type TrackState = {
   id: string;
   playing: boolean;
@@ -200,7 +202,7 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     this.views.toolbarView.webContents.send("track:title", track?.video?.title);
     this.views.youtubeView.webContents.send("track.change", track.video.videoId);
     this.windowContext.sendToAllViews(IPC_EVENT_NAMES.TRACK_CHANGE, track);
-    this.getProvider("mediaController")?.handleTrackMediaOSControlChange(track);
+    // this.getProvider("mediaController")?.handleTrackMediaOSControlChange(track);
     const api = this.getProvider("api") as ApiProvider;
     api.sendMessage("track:change", track);
   }
@@ -224,14 +226,14 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     //   ].join(" ")
     // );
     this._playState = isPlaying ? "playing" : "paused";
-    const discordProvider = this.getProvider("discord") as DiscordProvider;
-    if (isPlaying && !discordProvider.isConnected && discordProvider.enabled && discordProvider.settingsEnabled)
-      await discordProvider.enable();
-    const isUIViewRequired = uiTimeInfo?.[1] && progressSeconds > uiTimeInfo?.[1];
+    // const discordProvider = this.getProvider("discord") as DiscordProvider;
+    // if (isPlaying && !discordProvider.isConnected && discordProvider.enabled && discordProvider.settingsEnabled)
+    //   await discordProvider.enable();
+    // const isUIViewRequired = uiTimeInfo?.[1] && progressSeconds > uiTimeInfo?.[1];
 
-    const [currentUIProgress] = isUIViewRequired ? uiTimeInfo : [progressSeconds];
-    if (isUIViewRequired) await discordProvider.updatePlayState(isPlaying, currentUIProgress);
-    else await discordProvider.updatePlayState(isPlaying, progressSeconds);
+    // const [currentUIProgress] = isUIViewRequired ? uiTimeInfo : [progressSeconds];
+    // if (isUIViewRequired) await discordProvider.updatePlayState(isPlaying, currentUIProgress);
+    // else await discordProvider.updatePlayState(isPlaying, progressSeconds);
     const [isLiked, isDLiked] = await this.currentSongLikeState();
     const isMuted = await this.currentMutedState();
     const repeatState = await this.currentRepeatState();

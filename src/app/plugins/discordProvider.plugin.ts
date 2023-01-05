@@ -61,11 +61,11 @@ export default class DiscordProvider extends BaseProvider implements AfterInit {
     this.presence = null;
   }
   async enable() {
-    if (this.client) return;
-    clearTimeout(this._updateHandle);
-    await this.createClient();
-    this._isConnected = true;
-    this.windowContext.sendToAllViews("discord.connected");
+    // if (this.client) return;
+    // clearTimeout(this._updateHandle);
+    // await this.createClient();
+    // this._isConnected = true;
+    // this.windowContext.sendToAllViews("discord.connected");
   }
   private async createClient(): Promise<[DiscordClient, Presence]> {
     if (!this._enabled || this.isConnected) return null;
@@ -113,9 +113,9 @@ export default class DiscordProvider extends BaseProvider implements AfterInit {
     }
   }
   async AfterInit() {
-    const settings = this.settingsInstance.instance;
-    if (!settings.discord.enabled || !this._enabled) return;
-    await this.createClient();
+    // const settings = this.settingsInstance.instance;
+    // if (!settings.discord.enabled || !this._enabled) return;
+    // await this.createClient();
   }
   async updatePlayState(val: boolean, progress: number = 0) {
     if (this.trackService.trackData && this.isConnected)
@@ -185,11 +185,11 @@ export default class DiscordProvider extends BaseProvider implements AfterInit {
       this._isConnected
     );
   }
-  @IpcOn("track:change", {
-    debounce: 100,
-  })
-  private async __onTrackInfo(track: TrackData) {
-    if (!this.client || !track?.video || !this.isConnected) return;
-    this.setActivity(discordEmbedFromTrack(track));
-  }
+  // @IpcOn("track:change", {
+  //   debounce: 100,
+  // })
+  // private async __onTrackInfo(track: TrackData) {
+  //   if (!this.client || !track?.video || !this.isConnected) return;
+  //   this.setActivity(discordEmbedFromTrack(track));
+  // }
 }

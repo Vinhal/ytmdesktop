@@ -1,13 +1,20 @@
 <template>
   <div class="h-full overflow-hidden">
     <div
-      class="flex items-stretch justify-between border-b bg-black border-gray-600 select-none h-10 px-2 space-x-2"
+      class="flex items-stretch justify-between border-b bg-gray-900 border-gray-600 select-none h-10 px-2 space-x-2"
     >
-      <div class="flex items-center flex-1 drag space-x-2 appear">
-        <div class="flex items-center space-x-1" v-if="!isDarwin">
-          <div class="text-xs label -mt-px flex-none">YouTube Music</div>
+      <template v-if="!isDarwin">
+        <div class="flex items-center space-x-1">
+          <div @click="onClose" class="control-button control-button-danger">
+            <CloseIcon />
+          </div>
+          <div @click="onMin" class="control-button">
+            <MinIcon />
+          </div>
         </div>
-        <div v-else class="flex-none w-16"></div>
+      </template>
+
+      <div class="flex items-center drag space-x-2 appear">
         <div
           class="text-xs bg-secondary h-7 rounded items-center px-3 bg-opacity-50 appear flex truncate"
           v-if="track"
@@ -17,6 +24,11 @@
           >
         </div>
       </div>
+      <div class="w-px h-6 bg-gray-600"></div>
+      <toolbar-options></toolbar-options>
+
+      <div class="flex flex-1 drag"></div>
+
       <div class="flex items-center space-x-2">
         <template v-if="isDarwin && appVersion">
           <div class="text-xs opacity-30 text-white">v{{ appVersion }}</div>
@@ -40,21 +52,6 @@
             </template>
           </button>
         </template>
-        <toolbar-options></toolbar-options>
-        <template v-if="!isDarwin">
-          <div class="w-px h-6 bg-gray-600"></div>
-          <div class="flex items-center space-x-1">
-            <div @click="onMin" class="control-button">
-              <MinIcon />
-            </div>
-            <div @click="onMax" class="control-button">
-              <MaxIcon />
-            </div>
-            <div @click="onClose" class="control-button control-button-danger">
-              <CloseIcon />
-            </div>
-          </div>
-        </template>
       </div>
     </div>
   </div>
@@ -72,7 +69,6 @@ const isDarwin = ref(window.process.platform === "darwin");
 export default defineComponent({
   components: {
     CloseIcon,
-    MaxIcon,
     MinIcon,
     ToolbarOptions,
   },

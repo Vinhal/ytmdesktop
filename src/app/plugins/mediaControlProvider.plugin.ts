@@ -9,7 +9,7 @@ import IPC_EVENT_NAMES from '../utils/eventNames';
 
 @IpcContext
 export default class MediaControlProvider extends BaseProvider
-  implements AfterInit, BeforeStart, OnDestroy {
+  implements AfterInit, BeforeStart {
   private _mediaProvider: MediaServiceProvider;
   private xosmsLog = this.logger.child("xosms");
   
@@ -17,12 +17,8 @@ export default class MediaControlProvider extends BaseProvider
     super("mediaController");
   }
   
-  private mediaProviderEnabled() {
-    return this._mediaProvider && this._mediaProvider.isEnabled;
-  }
-
   async BeforeStart(app?: App) {
-    app.commandLine.appendSwitch("disable-features", "MediaSessionService");
+    // app.commandLine.appendSwitch("disable-features", "MediaSessionService");
     app.commandLine.appendSwitch("in-progress-gpu"); // gpu paint not working on some devices, todo: workaround/await fix
     app.commandLine.appendSwitch("no-sandbox"); // avoid freeze, todo: workaround/await fix
   }
@@ -36,6 +32,7 @@ export default class MediaControlProvider extends BaseProvider
         const trackProvider = this.getProvider("api");
         if (keyName === "pause") trackProvider.pauseTrack();
         else if (keyName === "play") trackProvider.playTrack();
+        else if (keyName === "playpause") trackProvider.toggleTrackPlayback();
         else if (keyName === "pause") trackProvider.pauseTrack();
         else if (keyName === "next") trackProvider.nextTrack();
         else if (keyName === "previous") trackProvider.prevTrack();
@@ -50,10 +47,6 @@ export default class MediaControlProvider extends BaseProvider
             ._mediaProvider}, Enabled: ${this.mediaProviderEnabled()}`,
         ].join(", ")
       );
-  }
-
-  async OnDestroy() {
-    globalShortcut
   }
 
   // @IpcOn(IPC_EVENT_NAMES.TRACK_PLAYSTATE)
