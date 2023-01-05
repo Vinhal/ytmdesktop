@@ -31,6 +31,7 @@ export async function createAppWindow(appOptions?: Partial<WindowOptions>) {
     maxWidth: maxWidth,
     maxHeight: maxHeight,
     minimizable: false,
+    transparent: true,
     backgroundColor: "#000000",
     fullscreenable: !maxWidth && !maxWidth,
     icon: path.join(__static, 'icon.png'),

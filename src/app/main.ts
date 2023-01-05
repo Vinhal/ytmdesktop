@@ -81,6 +81,7 @@ export default async function () {
       resizable: true,
       frame: false,
       title: translations.appName,
+      transparent: true,
       darkTheme: true,
       titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
       maximizable: true,
