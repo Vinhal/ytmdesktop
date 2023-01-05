@@ -6,7 +6,9 @@ import {
   BrowserView,
   BrowserWindow,
   BrowserWindowConstructorOptions,
+  globalShortcut,
   IpcMainEvent,
+  ipcMain,
   protocol,
   shell,
 } from "electron";
@@ -305,6 +307,11 @@ export default async function () {
     setTimeout(() => {
       mainWindow.main.focus(); // fix hibernation/standby expired window cache
     }, 50);
+
+    // open mini play shortcut
+    globalShortcut.register('CommandOrControl+P', () => {
+      mainWindow.views.youtubeView.webContents.executeJavaScript(`window.api.action('app.miniPlayer', 'xamops')`)
+    })
   });
 
   serverMain.on("app.minimize", (ev) => {
