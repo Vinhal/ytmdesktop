@@ -79,10 +79,14 @@ export interface TrackMicroFormatData {
   category: string;
   uploadDate: string;
 }
-
+interface TrackMeta {
+  thumbnail?: string
+  isAudioExclusive: boolean
+}
 export interface TrackData {
   video: TrackVideoData;
   context: TrackMicroFormatData;
+  meta: TrackMeta;
 }
 
 export const parseMusicUrlById = (id: string) =>
@@ -95,8 +99,8 @@ export const discordEmbedFromTrack = (
   progress: number = 0
 ): Presence => {
   const startDate = progress
-      ? new Date(Date.now() - progress * 1000)
-      : new Date(),
+    ? new Date(Date.now() - progress * 1000)
+    : new Date(),
     endDate = new Date(
       startDate.getTime() + ~~Number(track.video.lengthSeconds) * 1000
     );
@@ -116,19 +120,19 @@ export const discordEmbedFromTrack = (
     buttons: [
       ...(track.video.videoId
         ? [
-            {
-              label: "Open in Browser",
-              url: parseMusicUrlById(track.video.videoId),
-            },
-          ]
+          {
+            label: "Open in Browser",
+            url: parseMusicUrlById(track.video.videoId),
+          },
+        ]
         : []),
       ...(track.video.channelId
         ? [
-            {
-              label: "View Channel",
-              url: parseMusicChannelById(track.video.channelId),
-            },
-          ]
+          {
+            label: "View Channel",
+            url: parseMusicChannelById(track.video.channelId),
+          },
+        ]
         : []),
     ],
   };

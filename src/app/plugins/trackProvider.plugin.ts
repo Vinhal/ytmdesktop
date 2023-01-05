@@ -1,16 +1,14 @@
-import { App } from "electron";
+import { AfterInit, BaseProvider } from '@/app/utils/baseProvider';
+import { IpcContext, IpcOn } from '@/app/utils/onIpcEvent';
+import { TrackData } from '@/app/utils/trackData';
+import { App } from 'electron';
+import { clone } from 'lodash-es';
+import { firstBy } from 'thenby';
 
-import { AfterInit, BaseProvider } from "@/app/utils/baseProvider";
-import { IpcContext, IpcOn } from "@/app/utils/onIpcEvent";
-import { serverMain } from "@/app/utils/serverEvents";
-import { TrackData } from "@/app/utils/trackData";
-import DiscordProvider from "./discordProvider.plugin";
-import IPC_EVENT_NAMES from "../utils/eventNames";
-import { clone } from "lodash-es";
-import ApiProvider from "./apiProvider.plugin";
-import MediaControlProvider from "./mediaControlProvider.plugin";
+import IPC_EVENT_NAMES from '../utils/eventNames';
+import ApiProvider from './apiProvider.plugin';
+import DiscordProvider from './discordProvider.plugin';
 
-type RepeatState = 'off' | 'one' | 'all'
 type TrackState = {
   id: string;
   playing: boolean;
@@ -52,7 +50,7 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
   constructor(private app: App) {
     super("track");
   }
-  async AfterInit() {}
+  async AfterInit() { }
   get trackData() {
     return tracks[this._activeTrackId];
   }
@@ -64,9 +62,15 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
   }
 
   @IpcOn("track:info-req")
-  private async __onTrackInfo(ev, track: TrackData) {
-    if (!track.video) return;
-    tracks[track.video.videoId] = track;
+  private async __onTrackInfo(ev, ytTrack: TrackData) {
+    if (!ytTrack.video) return;
+    const track = tracks[ytTrack.video.videoId] = {
+      ...ytTrack,
+      meta: {
+        thumbnail: (ytTrack?.video?.thumbnail?.thumbnails ?? ytTrack?.context?.thumbnail?.thumbnails)?.sort(firstBy(d => d.height, 'desc'))[0]?.url,
+        isAudioExclusive: ytTrack?.video?.musicVideoType === "MUSIC_VIDEO_TYPE_ATV"
+      }
+    };
 
     if (
       track.video.videoId === this._activeTrackId ||
@@ -191,16 +195,14 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
       });
     }
   }
-  public async pushTrackToViews(track: TrackData) {
+  public async pushTrackToViews(trackRef: TrackData) {
+    const track = clone(trackRef);
     this.views.toolbarView.webContents.send("track:title", track?.video?.title);
     this.views.youtubeView.webContents.send("track.change", track.video.videoId);
     this.windowContext.sendToAllViews(IPC_EVENT_NAMES.TRACK_CHANGE, track);
-    
+    this.getProvider("mediaController")?.handleTrackMediaOSControlChange(track);
     const api = this.getProvider("api") as ApiProvider;
-    api.sendMessage(IPC_EVENT_NAMES.TRACK_CHANGE, { ...track });
-
-    const mediaController = this.getProvider<MediaControlProvider>("mediaController");
-    mediaController.handleTrackMediaOSControlChange(track)
+    api.sendMessage("track:change", track);
   }
   @IpcOn(IPC_EVENT_NAMES.TRACK_PLAYSTATE, {
     debounce: 100
@@ -223,7 +225,7 @@ export default class TrackProvider extends BaseProvider implements AfterInit {
     // );
     this._playState = isPlaying ? "playing" : "paused";
     const discordProvider = this.getProvider("discord") as DiscordProvider;
-    if (isPlaying && !discordProvider.isConnected && discordProvider.enabled)
+    if (isPlaying && !discordProvider.isConnected && discordProvider.enabled && discordProvider.settingsEnabled)
       await discordProvider.enable();
     const isUIViewRequired = uiTimeInfo?.[1] && progressSeconds > uiTimeInfo?.[1];
 

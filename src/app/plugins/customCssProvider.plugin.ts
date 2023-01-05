@@ -12,7 +12,7 @@ import {
 import customDefaultCss from "!raw-loader!../../assets/default-custom.scss";
 import { serverMain } from "@/app/utils/serverEvents";
 @IpcContext
-export default class EventProvider extends BaseProvider implements AfterInit {
+export default class CustomCSSProvider extends BaseProvider implements AfterInit {
   private scssUpdateHandler: string;
   get settingsInstance(): SettingsProvider {
     return this.getProvider("settings");
@@ -42,9 +42,8 @@ export default class EventProvider extends BaseProvider implements AfterInit {
     ) {
       if (this.scssUpdateHandler)
         fs.unwatchFile(this.scssUpdateHandler), (this.scssUpdateHandler = null);
-      return;
     }
-    if (!this.scssUpdateHandler) {
+    if (!this.scssUpdateHandler && config.scssFileWatch) {
       fs.watchFile(
         config.scssFile,
         { interval: 1000 },

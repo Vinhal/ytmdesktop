@@ -1,6 +1,8 @@
-import { App } from "electron";
-import { BaseEvent } from "./baseEvent";
-import { BaseProvider } from "./baseProvider";
+import { App } from 'electron';
+import { BaseProviderNames } from 'ytmd';
+
+import { BaseEvent } from './baseEvent';
+import { BaseProvider } from './baseProvider';
 
 export async function createPluginCollection(app: App) {
   return (() => {
@@ -29,8 +31,9 @@ export async function createPluginCollection(app: App) {
             .map((x) => Promise.resolve(x[event](app)))
         );
       },
-      getProvider: <T>(name: string): T =>
-        providers.find((x) => x.getName() === name),
+      getProvider<T extends BaseProviderNames[K], K extends keyof BaseProviderNames & string>(name: K): T {
+        return providers.find(x => x.getName() === name) as T;
+      }
     };
   })();
 }

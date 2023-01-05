@@ -1,22 +1,24 @@
-import { App, BrowserWindow, IpcMainEvent } from "electron";
-import { BaseProvider, AfterInit } from "@/app/utils/baseProvider";
-import { IpcContext, IpcHandle, IpcOn } from "@/app/utils/onIpcEvent";
-import { setSentryEnabled } from "@/app/utils/sentry";
-import TrackProvider from "./trackProvider.plugin";
-import DiscordProvider from "./discordProvider.plugin";
-import { isDevelopment } from "../utils/devUtils";
-import { createAppWindow } from "../utils/windowUtils";
-import { serverMain } from "../utils/serverEvents";
-import { release as osRelease } from "os";
-const OS_RELEASE = osRelease();
+import { AfterInit, BaseProvider, BeforeStart } from '@/app/utils/baseProvider';
+import { IpcContext, IpcHandle, IpcOn } from '@/app/utils/onIpcEvent';
+import { setSentryEnabled } from '@/app/utils/sentry';
+import { App, BrowserWindow, IpcMainEvent, powerSaveBlocker } from 'electron';
+
+import { isDevelopment } from '../utils/devUtils';
+import OS_RELEASE from '../utils/os';
+import { serverMain } from '../utils/serverEvents';
+import { createAppWindow } from '../utils/windowUtils';
+
 const STATE_PAUSE_TIME = isDevelopment ? 30e3 : 30e4;
 @IpcContext
-export default class AppProvider extends BaseProvider implements AfterInit {
+export default class AppProvider extends BaseProvider implements AfterInit, BeforeStart {
   constructor(private _app: App) {
     super("app");
   }
   get app() {
     return this._app;
+  }
+  async BeforeStart() {
+    powerSaveBlocker.start('prevent-app-suspension')
   }
   async AfterInit() {
     this._app.on("browser-window-focus", this.windowFocus.bind(this));
@@ -25,10 +27,10 @@ export default class AppProvider extends BaseProvider implements AfterInit {
   private _blurTimestamp: Date = null;
   private _blurAfkHandle: any;
   private get isPlaying() {
-    return !!this.getProvider<TrackProvider>("track")?.playing;
+    return !!this.getProvider("track")?.playing;
   }
   private get discord() {
-    return this.getProvider<DiscordProvider>("discord");
+    return this.getProvider("discord");
   }
   private windowBlur() {
     if (this.isPlaying) return;
@@ -50,7 +52,7 @@ export default class AppProvider extends BaseProvider implements AfterInit {
     this._blurTimestamp = null;
     clearTimeout(this._blurAfkHandle);
     this._blurAfkHandle = null;
-    this.discord.enable();
+    if (this.discord.settingsEnabled) this.discord.enable();
   }
   @IpcOn("settingsProvider.change", {
     filter: (key: string) => key === "app.enableStatisticsAndErrorTracing",
