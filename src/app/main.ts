@@ -1,4 +1,3 @@
-
 import translations from "@/translations";
 import logger from "@/utils/Logger";
 import {
@@ -11,6 +10,8 @@ import {
   ipcMain,
   protocol,
   shell,
+  Menu,
+  MenuItem,
 } from "electron";
 import { debounce } from "lodash-es";
 import path from "path";
@@ -19,16 +20,9 @@ import SettingsProvider from "./plugins/settingsProvider.plugin";
 import UpdateProvider from "./plugins/updateProvider.plugin";
 
 import { defaultUrl, isDevelopment } from "./utils/devUtils";
-import {
-  BrowserWindowViews,
-  createWindowContext,
-  getViewObject,
-} from "./utils/mappedWindow";
+import { BrowserWindowViews, createWindowContext, getViewObject } from "./utils/mappedWindow";
 import { serverMain } from "./utils/serverEvents";
-import {
-  createEventCollection,
-  createPluginCollection,
-} from "./utils/serviceCollection";
+import { createEventCollection, createPluginCollection } from "./utils/serviceCollection";
 import { createApiView, createView } from "./utils/view";
 import { rootWindowInjectUtils } from "./utils/webContentUtils";
 import { appIconPath, createAppWindow } from "./utils/windowUtils";
@@ -39,13 +33,8 @@ function parseScriptPath(p: string) {
 const log = logger.child({ label: "main" });
 export default async function () {
   const serviceCollection = await createPluginCollection(app),
-    eventCollection = await createEventCollection(
-      app,
-      serviceCollection.providers
-    );
-  log.debug(
-    `Loaded Providers: ${serviceCollection.getProviderNames().join(", ")}`
-  );
+    eventCollection = await createEventCollection(app, serviceCollection.providers);
+  log.debug(`Loaded Providers: ${serviceCollection.getProviderNames().join(", ")}`);
   log.debug(`Loaded Events: ${eventCollection.getProviderNames().join(", ")}`);
 
   try {
@@ -75,7 +64,7 @@ export default async function () {
       minWidth: 800,
       minHeight: 480,
       autoHideMenuBar: true,
-      icon: path.join(__static, 'icon.png'),
+      icon: path.join(__static, "icon.png"),
       backgroundColor: "#000000",
       center: true,
       closable: true,
@@ -90,7 +79,7 @@ export default async function () {
       webPreferences: {
         nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION === "true",
         contextIsolation: true,
-        backgroundThrottling: false
+        backgroundThrottling: false,
       },
       ...(options || {}),
     });
@@ -132,32 +121,26 @@ export default async function () {
       view.setAutoResize({ width: true, height: true });
       win.setTopBrowserView(view);
     });
-    const youtubeView = await createView(
-      parseScriptPath("preload-yt.js"),
-      (view) => {
-        win.addBrowserView(view);
-        const [width, height] = win.getSize();
-        view.setBounds({
-          y: 40,
-          x: 0,
-          height: height - 40,
-          width,
-        });
-        view.setAutoResize({ width: true, height: true });
-        let lastLocation: string;
-        view.webContents.on("did-navigate", (ev, location) => {
-          lastLocation = location;
-        });
-        view.webContents.on("will-navigate", (ev, location) => {
-          if (
-            !lastLocation?.match(defaultUrl) &&
-            !!location?.match(defaultUrl)
-          ) {
-            serverMain.emit("app.loadStart");
-          }
-        });
-      }
-    );
+    const youtubeView = await createView(parseScriptPath("preload-yt.js"), (view) => {
+      win.addBrowserView(view);
+      const [width, height] = win.getSize();
+      view.setBounds({
+        y: 40,
+        x: 0,
+        height: height - 40,
+        width,
+      });
+      view.setAutoResize({ width: true, height: true });
+      let lastLocation: string;
+      view.webContents.on("did-navigate", (ev, location) => {
+        lastLocation = location;
+      });
+      view.webContents.on("will-navigate", (ev, location) => {
+        if (!lastLocation?.match(defaultUrl) && !!location?.match(defaultUrl)) {
+          serverMain.emit("app.loadStart");
+        }
+      });
+    });
     const toolbarView = await createApiView("/youtube/toolbar", (view) => {
       win.addBrowserView(view);
       win.setTopBrowserView(view);
@@ -183,9 +166,7 @@ export default async function () {
           !win
             .getBrowserViews()
             ?.find(
-              (x) =>
-                loadingView.webContents &&
-                x.webContents.id === loadingView.webContents.id
+              (x) => loadingView.webContents && x.webContents.id === loadingView.webContents.id
             )
         )
           win.addBrowserView(loadingView);
@@ -194,8 +175,7 @@ export default async function () {
     );
     serverMain.emit("app.loadStart");
     await youtubeView.webContents.loadURL(defaultUrl).then(() => {
-      if (isDevelopment)
-        youtubeView.webContents.openDevTools({ mode: "detach" });
+      if (isDevelopment) youtubeView.webContents.openDevTools({ mode: "detach" });
       if (process.platform === "darwin") {
         const bounds = win.getBounds();
         win.setBounds({
@@ -209,9 +189,7 @@ export default async function () {
 
     try {
       if (serviceCollection)
-        serviceCollection.providers.forEach((p) =>
-          p.__registerWindows(mainWindow)
-        );
+        serviceCollection.providers.forEach((p) => p.__registerWindows(mainWindow));
     } catch {}
     let fromMaximized = false;
     win.on("maximize", () => {
@@ -285,9 +263,7 @@ export default async function () {
       );
 
       if (serviceCollection)
-        serviceCollection.providers.forEach((p) =>
-          p.__registerWindows(mainWindow)
-        );
+        serviceCollection.providers.forEach((p) => p.__registerWindows(mainWindow));
     }
   });
   app.on("ready", async () => {
@@ -309,9 +285,34 @@ export default async function () {
     }, 50);
 
     // open mini play shortcut
-    globalShortcut.register('CommandOrControl+P', () => {
-      mainWindow.views.youtubeView.webContents.executeJavaScript(`window.api.action('app.miniPlayer', 'xamops')`)
-    })
+
+    const menu = new Menu();
+    menu.append(
+      new MenuItem({
+        label: "Player",
+        submenu: [
+          {
+            role: "help",
+            accelerator: "CommandOrControl+P",
+            click: () => {
+              mainWindow.views.youtubeView.webContents.executeJavaScript(
+                `window.api.action('app.miniPlayer', 'xamops')`
+              );
+              console.log("Electron rocks!");
+            },
+          },
+        ],
+      })
+    );
+
+    Menu.setApplicationMenu(menu);
+  });
+
+  app.on("second-instance", () => {
+    if (mainWindow.main) {
+      if (mainWindow.main.isMinimized()) mainWindow.main.restore();
+      mainWindow.main.focus();
+    }
   });
 
   serverMain.on("app.minimize", (ev) => {
@@ -330,14 +331,8 @@ export default async function () {
   });
   app.on("before-quit", (ev) => {
     // dont allow prevent of quit if update queued
-    if (
-      forcedQuit ||
-      serviceCollection.getProvider("update")
-        .updateQueuedForInstall
-    )
-      return;
-    const settings =
-      serviceCollection.getProvider("settings");
+    if (forcedQuit || serviceCollection.getProvider("update").updateQueuedForInstall) return;
+    const settings = serviceCollection.getProvider("settings");
     if (settings.get("app.minimizeTrayOverride")) {
       serverMain.emit("app.trayState", null, "hidden");
       ev.preventDefault(); // prevent quit - minimize to tray
@@ -363,16 +358,12 @@ export default async function () {
     if (process.platform === "win32") {
       process.on("message", (data) => {
         if (data === "graceful-exit") {
-          serviceCollection
-            .exec("OnDestroy")
-            .then(() => serverMain.emit("app.quit", true));
+          serviceCollection.exec("OnDestroy").then(() => serverMain.emit("app.quit", true));
         }
       });
     } else {
       process.on("SIGTERM", () => {
-        serviceCollection
-          .exec("OnDestroy")
-          .then(() => serverMain.emit("app.quit", true));
+        serviceCollection.exec("OnDestroy").then(() => serverMain.emit("app.quit", true));
       });
     }
   }

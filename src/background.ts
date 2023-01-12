@@ -1,4 +1,9 @@
 import "./polyfill";
-import app from "./app/main";
+import createWindow from "./app/main";
+import { app } from "electron";
 
-app();
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  createWindow();
+}

@@ -7,7 +7,7 @@ const webpackNodeExternals = require("webpack-node-externals");
 const builderOptions = {
   publish: ["github"],
   appId: "net.venipa.ytmdesktop",
-  productName: "ytmusic",
+  productName: "YouTube Music",
   extraMetadata: {
     name: "ytmusic",
   },
